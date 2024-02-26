@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LINKY</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <script src="script.js"></script>
+    <style>
+       
+
+    </style>
+</head>
+<body>
+    <header>
+                      
+        
+    </header>
+    
+    <h1>LINKY</h1>
+    <script>
+
+        
+const currentDate = new Date();
+
+// Define an array of weekday names
+const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// Define an array of month names
+const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+// Get the day, month, and year from the current date
+const day = weekdays[currentDate.getDay()];
+const month = months[currentDate.getMonth()];
+const date = currentDate.getDate();
+const year = currentDate.getFullYear();
+
+// Display the Day and Date
+document.write(`<h2 >${day}, ${month} ${date} ${year}</h2>`);
+document.write(`<h3 id="timer">00:00:00</h3>`);
+
+let timerInterval;
+
+function startTimer() {
+        let seconds = 0;
+        let minutes = 0;
+        let hours = 0;
+
+        timerInterval = setInterval (() => {
+            seconds++;
+            if (seconds === 60) {
+                seconds = 0;
+                minutes++;
+                if (minutes === 60) {
+                    minutes = 0;
+                    hours++;
+                }
+            }
+
+            const formattedTime = `${padZero(hours)}:${padZero(minutes)}:${padZero(seconds)}`;
+            document.getElementById("timer").textContent = formattedTime;
+        }, 1000);
+    }
+
+    function padZero(value) {
+        return value.toString().padStart(2, "0");
+    }
+
+    function stopTimer() {
+        clearInterval(timerInterval);
+        
+    }
+
+    startTimer();
+
+
+
+
+
+       
+        //hexagon IDs are stored in an array. The array is used to populate the hexagon grid.
+        const hexagonID = [0, 1, 2, 19, 20, 21, 3, 18, 33, 34, 22, 4, 17, 32, 41, 35, 23, 5, 16, 31, 40, 42, 36, 24, 6, 15, 30, 39, 37, 25, 7, 14, 29, 38, 26, 8, 13, 28, 27, 9, 12, 11, 10];
+        
+        const row = [];
+        const outerHex = [];
+        const innerHex = [];
+
+       
+
+        buildHexagonGrid();
+
+
+        function buildHexagonGrid()
+
+        {
+            for (let i = 0; i < 10; i++) {
+                
+                switch (i)
+
+                {    
+                    
+                    //first parameter is the row number, second parameter is the number of hexagons in the row, third parameter contains the starting position in the hexagonID array   
+                   
+                    case 0:
+                    buildGridRows(0,3,0)
+                    break;
+
+                    case 1: 
+                    buildGridRows(1,4,3)
+                    break;
+
+                    case 2:
+                    buildGridRows(2,5,7)
+                    break;
+
+                    case 3:
+                    buildGridRows(3,6,12)
+                    break;
+
+                    case 4:
+                    buildGridRows(4,7,18)
+                    break;
+
+                    case 5:
+                    buildGridRows(5,6,25)
+                    break;
+
+                    case 6:
+                    buildGridRows(6,5,31)
+                    break;
+
+                    case 7:
+                    buildGridRows(7,4,36)
+                    break;
+
+                    case 8:
+                    buildGridRows(8,3,40)
+                    break;
+                }
+             }
+
+        }
+
+
+               
+
+
+        function buildGridRows(rowNumber, hexagonNumber, hexagonIDCounter)
+
+
+
+
+
+
+        {                    
+           
+        row[rowNumber] = document.createElement('div')
+
+        row[rowNumber].className = 'hexagon-container';
+        
+        for (let i = 0; i < hexagonNumber; i++) {
+           
+
+            outerHex[i] = document.createElement('div');
+            outerHex[i].className = 'hexagon-outer';
+            outerHex[i].id = "outerID" + hexagonID[hexagonIDCounter + i];
+                             
+            innerHex[i] = document.createElement('div');
+            innerHex[i].className = 'hexagon-inner';           
+            innerHex[i].id = hexagonID[hexagonIDCounter + i];
+            
+            innerHex[i].tabIndex = innerHex[i].id;
+                                  
+
+            outerHex[i].appendChild(innerHex[i]);
+            row[rowNumber].appendChild(outerHex[i]);
+         }
+        
+         document.body.appendChild(row[rowNumber]);
+        
+        }     
+
+        
+
+        document.addEventListener("DOMContentLoaded", function() {
+        
+        document.getElementById("outerID0").style.animation = "bounce 1s infinite";
+        document.getElementById(0).focus();
+        document.getElementById(0).addEventListener('keyup', AddGuess);
+
+          });
+       
+       
+
+        //Declare a two-dimensional array contains the words to be solved
+        const linkedWords = 
+        ["ACROBAT", "ATTITUDE", "DELICIOUS", "USURPER", "PERCHANCE", "CEASELESS", "ESSAY", "SAYING"]
+        
+        //The hexWords array contains the overlapping words without duplicates
+        //For example, the words "ACROBAT" and "ATTITUDE" are stored as "ACROBATITUDE"
+        const hexWords = []; 
+        
+        HexWordsCounter = 0;
+         
+        //This array tracks which hexagon is associated with each clue
+        const HexWordsClueCounter = [];
+        
+        //This array tracks which hexagon is associated with each overlap
+        const HexWordsOverlapCounter = [];
+
+        const cluesWords = [
+            ["Circus performer", "Way of thinking", "Very tasty", "Illegal ruler", "Possibly", "Nonstop", "Try - Composition", "Proverb"]                      
+        ];        
+  
+
+        //Function that finds the overlapping letters between two words and populates the HexWords array with unique letters
+        
+        function CreateLinkedWordList()
+
+        {
+          
+            for(i=0; i < linkedWords.length-1; i++)
+
+            {   
+                string1 = linkedWords[i];
+                compareString = linkedWords[i+1]
+
+               
+                
+                //Tweak the compareString to match the length of string1
+                if (string1.length > compareString.length)
+
+                {
+                //Add padding at the end of the compareString
+                compareString = compareString.padEnd(string1.length, "0");
+                }
+
+                else 
+
+                {                
+                //Reduce the compareString to match the length of string1
+                compareString = compareString.slice(0, string1.length);
+                
+                }                          
+               
+
+                for(j=0; j < compareString.length; j++)
+
+                {
+                  
+                  if ((string1.slice(j, string1.length)) == compareString.slice(0, compareString.length-j))
+                  {
+                    
+                    //loop to track which hexagons will highlighted as containing overlapping letters
+                    for(k=0; k < (string1.slice(j, string1.length).length); k++)
+                    {
+                        HexWordsOverlapCounter[HexWordsCounter + k] = "Overlap"; 
+                        
+                    }
+
+                    break;
+                  }
+
+                  else
+
+                  {                
+                                  
+                   //Use the HexWordsClue Counter to track which hexagon is assoicated with each clue
+                   HexWordsClueCounter[HexWordsCounter] = i;                                
+                   HexWordsCounter = HexWordsCounter + 1;
+
+                   hexWords.push(string1.slice(j, j+1));
+
+                   
+                   
+                   
+                    }
+            }
+
+
+            }
+
+            //Add the last word to the hexWords array
+            
+            hexWords.push( ...linkedWords[linkedWords.length-1]);
+            
+            lastCluestring = linkedWords[linkedWords.length-1];
+
+                                  
+
+            for (i=0; i < lastCluestring.length; i++)
+            {
+                
+                HexWordsClueCounter.push(linkedWords.length-1);
+            }
+                  
+                               
+        }
+      
+               
+        CreateLinkedWordList();
+        AddClueNumbers();
+        UpdateHexagonWithOverlapBorders();
+     
+        
+        function AddClueNumbers()
+
+        { 
+
+
+            //Add the clue numbers to the hexagon grid
+            for (i=0; i < hexWords.length; i++)
+            {
+                                                
+                if(HexWordsClueCounter[i] != HexWordsClueCounter[i-1])
+                {
+                    document.getElementById(i).innerHTML = "<span style='position: absolute; top: 10px; right: 6px; font-size: small; font-weight: bold'>" + (HexWordsClueCounter[i] + 1) + "</span>";
+                                                   
+                 }
+            }
+        }
+
+        function UpdateHexagonWithOverlapBorders()
+
+        {            
+            for(i=0; i < HexWordsOverlapCounter.length; i++)
+
+            {   
+                if (HexWordsOverlapCounter[i] == "Overlap")
+
+                {   outerIDref = "outerID" + i;   
+                    document.getElementById(outerIDref).className = 'hexagon-overlap'; 
+                }
+            }
+
+        }             
+
+         // Create a clue card
+        const clueCard = document.createElement('div');
+        clueCard.className = 'cluecard';
+         
+        clueCard.textContent.className = 'cluetext';
+        cluesContainer = document.createElement('div');
+        cluesContainer.className = 'container';
+        cluesContainer.textContent = "Clues:";
+        clueCard.appendChild(cluesContainer);
+        document.body.appendChild(clueCard);
+
+
+        //Populate the clue card with clues
+        for (i=0; i < cluesWords[0].length; i++)
+        {                    
+                    
+          
+            const clueDiv = document.createElement('div');
+            clueDiv.id = "clueDiv" + i;
+            clueDiv.textContent = (i+1) + ": " + cluesWords[0][i] + " " + "(" + linkedWords[i].length + ")";
+            clueDiv.className = 'cluetext';
+            cluesContainer.appendChild(clueDiv);
+
+            clueDiv.addEventListener('mouseover', HighlightHexagons);
+            //clueDiv.addEventListener('mouseout', ClearHighlighting);
+            clueDiv.addEventListener('keypress', ChangeHighlightedClue);
+
+       }
+
+    
+    const buttonscontainer = document.createElement('div');
+    buttonscontainer.className = "buttons-container";
+    
+    const checkWordBtn = document.createElement('button');
+    checkWordBtn.className = 'submit-button';
+    checkWordBtn.innerHTML = 'Check Word';
+    buttonscontainer.appendChild(checkWordBtn);   
+    checkWordBtn.addEventListener('click', handleCheckWord);
+
+    
+    const revealWordBtn = document.createElement('button');
+    revealWordBtn.className = 'submit-button';
+    revealWordBtn.innerHTML = 'Reveal Word';
+    buttonscontainer.appendChild(revealWordBtn);   
+    revealWordBtn.addEventListener('click', handleRevealWord);   
+
+
+    const clearWordBtn = document.createElement('button');  
+    clearWordBtn.className = 'submit-button';
+    clearWordBtn.id = 'clearWordBtn';
+    clearWordBtn.innerHTML = 'Clear Word';   
+    buttonscontainer.appendChild(clearWordBtn);
+    clearWordBtn.addEventListener('click', handleClearWord);   
+
+    
+    document.body.appendChild(buttonscontainer);
+
+
+    const buttonscontainer2 = document.createElement('div');
+    buttonscontainer2.className = "buttons-container";
+    
+
+    const checkPuzzleBtn = document.createElement('button');
+    checkPuzzleBtn.className = 'submit-button';
+    checkPuzzleBtn.id = 'checkPuzzleBtn';
+    checkPuzzleBtn.innerHTML = 'Check Puzzle';
+    buttonscontainer2.appendChild(checkPuzzleBtn);
+    checkPuzzleBtn.addEventListener('click', handleCheckPuzzle);
+
+     const revealPuzzleBtn = document.createElement('button');
+    revealPuzzleBtn.className = 'submit-button';
+    revealPuzzleBtn.id = 'revealPuzzleBtn';
+    revealPuzzleBtn.innerHTML = 'Reveal Puzzle';
+    buttonscontainer2.appendChild(revealPuzzleBtn);
+    revealPuzzleBtn.addEventListener('click', handleRevealPuzzle);  
+    
+    
+    const clearPuzzleBtn = document.createElement('button');
+    clearPuzzleBtn.className = 'submit-button';
+    clearPuzzleBtn.id = 'clearPuzzleBtn';
+    clearPuzzleBtn.innerHTML = 'Clear Puzzle';
+    buttonscontainer2.appendChild(clearPuzzleBtn);
+    clearPuzzleBtn.addEventListener('click', handleClearPuzzle);
+    
+    //const submitBtn = document.createElement('button');
+    //submitBtn.className = 'submit-button';
+    //submitBtn.innerHTML = 'Submit';
+    //submitBtn.addEventListener('click', handleSubmit);   
+
+    document.body.appendChild(buttonscontainer2);     
+       
+    
+
+       function HighlightHexagons()
+     
+              
+       { 
+
+
+        for (i=0; i < linkedWords.length; i++)
+                   
+                   {
+            
+                    cluetoClear = "clueDiv" + i;
+            
+                    document.getElementById(cluetoClear).style.backgroundColor = "white";            
+            
+                   }
+
+
+        document.getElementById(event.target.id).focus();
+               
+       
+               
+        //clear the hexagon grid of all highlighting
+        for (i=0; i < hexWords.length; i++)
+        {
+            document.getElementById(i).className = 'hexagon-inner';
+        }
+
+        //Highlight the selected clue
+        document.getElementById(event.target.id).style.backgroundColor = "yellow";
+        
+        clueCounter = event.target.id.slice(7,8);
+                
+        HighlightOverlapCounter = 0;
+
+        
+        for (i=0; i < hexWords.length; i++)
+        {
+                                  
+            if (HexWordsClueCounter[i] == clueCounter)
+
+            {
+              document.getElementById(i).className = 'hexagon-inner-word'; 
+              
+              HighlightOverlapCounter = i + 1;                       
+            }         
+        
+        }
+       
+        clueCounter++;
+        for (i=HighlightOverlapCounter; i < hexWords.length; i++)
+        {                     
+
+            if (HexWordsOverlapCounter[i] == "Overlap" && clueCounter == HexWordsClueCounter[i]) 
+
+            {            
+                           
+                document.getElementById(i).className = 'hexagon-inner-word';      
+                                                          
+            }
+
+            else
+            {
+                break;
+            }
+
+        }       
+       
+        }
+
+
+       function ClearHighlighting() {
+
+       for (i=0; i < linkedWords.length; i++)
+                   
+       {
+
+        cluetoClear = "clueDiv" + i;
+
+        document.getElementById(cluetoClear).style.backgroundColor = "white";            
+
+       }
+       }
+
+        function ChangeHighlightedClue()
+
+        { 
+          function ChangeHighlightedClue(event) {
+         if (event.key === "Tab" || event.key === "ArrowUp" || event.key === "ArrowDown") {
+        // Add your code here to handle the tab key, arrow up key, or arrow down key press
+    
+            if (event.key === "Tab")
+            {
+                event.key.id = event.key.id + 1;
+                HighlightHexagons();
+
+            }
+
+            }
+    
+           }
+        }
+   
+    // Add event listeners to the hexagons
+  
+    const hexagons = document.querySelectorAll('.hexagon-inner');
+    hexagons.forEach(hexagon => {
+        hexagon.addEventListener('mouseover', IndicateHexagonFocus);
+        hexagon.addEventListener('mouseout', ReturntoDefault);
+        hexagon.addEventListener('focus', IndicateHexagonFocus);
+        
+        hexagon.addEventListener('click', IndicateHexagonFocus);
+        hexagon.addEventListener('blur', ReturntoDefault);
+       
+    });
+
+        
+    function IndicateHexagonFocus(event) {
+
+       
+
+        event.target.focus();
+
+        //Clear all highlighting from the hexagon grid
+        for (i=0; i < hexWords.length; i++)
+        {
+            document.getElementById(i).className = 'hexagon-inner';
+        }
+
+        //Clear all highlighting from the clue card
+        for (i=0; i < cluesWords[0].length; i++)
+        {
+            document.getElementById("clueDiv" + i).style.backgroundColor = "white";
+        }
+                
+        //Highlight the associated clue in the clue card
+        document.getElementById("clueDiv" + HexWordsClueCounter[parseInt(event.target.id)]).style.backgroundColor = "yellow";
+
+
+        outerIDref = "outerID" + event.target.id;   
+       
+      
+        document.getElementById(outerIDref).classList.remove('hexagon-outer');
+        document.getElementById(outerIDref).classList.add('hexagon-focus');    
+                                
+                   
+        Cluetotrace =  HexWordsClueCounter[parseInt(event.target.id)];      
+        
+        //Highlight the clue corresponding to the hexagons that are selected    
+
+
+        //Use this variable to highlight the letters that form part of the highlighted word
+        HighlightOverlapCounter = 0;
+
+        
+        for (i=0; i <hexWords.length; i++)
+        {                    
+         
+            if (Cluetotrace == HexWordsClueCounter[i])
+
+            {
+           
+              document.getElementById(i).className = 'hexagon-inner-word';                        
+             
+              HighlightOverlapCounter = i + 1;
+
+            }
+
+        }   
+
+        //This loop highlights the overlapping letters that form part of the next word. To cover cases where overlaps are unbroken between multiple words we 
+        //Increament Cluetotrace by 1 because we only want to hightlight the overlapping letters that form part of the next word
+        Cluetotrace = Cluetotrace + 1;
+        for (i=HighlightOverlapCounter; i < hexWords.length; i++)
+        {
+           
+            if (HexWordsOverlapCounter[i] == "Overlap" && Cluetotrace == HexWordsClueCounter[i]) 
+
+            {                  
+                   
+                    document.getElementById(i).className = 'hexagon-inner-word';                                                  
+                
+            }
+
+            else
+
+            {
+                break;
+            }
+
+        }
+
+
+        const hexagonGuess = document.getElementById(event.target.id);
+               
+        hexagonGuess.addEventListener('keyup', AddGuess);       
+                
+    }
+
+
+    function AddGuess(event) {
+                   
+        const hexagonGuess = document.getElementById(event.target.id);
+
+        if (/^[a-zA-Z]$/.test(event.key)) 
+        
+        {        
+                  
+           CheckHexagonGuessforExistingContent = hexagonGuess.innerHTML.toString();
+           
+           if ((CheckHexagonGuessforExistingContent.includes("span")))
+           {
+            
+            const spanIndex = CheckHexagonGuessforExistingContent.indexOf("<span");
+            const modifiedContent = CheckHexagonGuessforExistingContent.substring(spanIndex);
+
+            hexagonGuess.innerHTML = "";
+            hexagonGuess.innerHTML = event.key.toUpperCase() + modifiedContent;
+
+            }
+
+            else
+                
+                {
+                    hexagonGuess.innerHTML = event.key.toUpperCase();
+                }
+
+          
+            //Now check that if all the hexagons in the spiral have been filled. If so, then the puzzle is complete
+            
+            for (i=0; i < hexWords.length; i++)
+            { 
+                
+                const firstCharacter = document.getElementById(i).innerHTML.substring(0,1);
+
+                
+                if ((/^[a-zA-Z]$/.test(firstCharacter) == false))
+
+
+                {
+                    break;
+                }
+
+                else if (i == hexWords.length - 1)
+                {
+                   
+                    
+                    //Add a delay to allow the last hexagon to be filled before the handleSubmit function is called
+                    setTimeout(function() {
+                        handleSubmit();
+                    }, 600);
+                    
+                }
+            }            
+
+         
+           hexagonGuess.removeEventListener('keyup', AddGuess);          
+           
+           document.getElementById(event.target.id).blur();
+           
+              //Add event listener to the next hexagon  
+
+            const nextHexagonId = parseInt(event.target.id) + 1;
+            const nextHexagon = document.getElementById(nextHexagonId.toString());
+
+            nextHexagon.focus();
+            nextHexagon.addEventListener('keyup', AddGuess);    
+                          
+
+        }
+        
+        if(event.keyCode == 39) {
+
+            document.getElementById(event.target.id).blur();
+           
+           
+            hexagonGuess.removeEventListener('keyup', AddGuess);          
+           
+                    
+              //Add event listener to the next hexagon  
+
+            const nextHexagonId = parseInt(event.target.id) + 1;
+            const nextHexagon = document.getElementById(nextHexagonId.toString());
+           
+            nextHexagon.focus();
+            nextHexagon.addEventListener('keyup', AddGuess);   
+
+        }
+
+
+        if(event.keyCode == 37) {
+
+          
+        
+        document.getElementById(event.target.id).blur();
+        
+        hexagonGuess.removeEventListener('keyup', AddGuess);   
+
+       //Add event listener to the next hexagon  
+
+       const nextHexagonId = parseInt(event.target.id) - 1;
+       const nextHexagon = document.getElementById(nextHexagonId.toString());
+       
+       nextHexagon.focus();
+       nextHexagon.addEventListener('keyup', AddGuess);   
+       
+        }
+
+
+
+        else
+
+        {event.preventDefault();
+        
+        }
+
+    }
+
+    function ReturntoDefault(event) {       
+         
+        for(i=0; i < hexWords.length; i++)
+
+        {
+            outerIDref = "outerID" + i; 
+
+            if(HexWordsOverlapCounter[i] == "Overlap")
+                {document.getElementById(outerIDref).className = 'hexagon-overlap';}
+
+        else            
+
+        {document.getElementById(outerIDref).className = 'hexagon-outer';}
+
+        }    
+
+        const hexagonGuess = document.getElementById(event.target.id);
+        hexagonGuess.removeEventListener('keyup', AddGuess);
+        hexagonGuess.removeEventListener('focus', IndicateHexagonFocus);
+
+        }
+
+    // Event handler for hexagon click
+    function handleClick(event) {
+        const value = event.target.getAttribute('value');
+        
+        // Add your logic here
+    }
+    
+
+
+    function handleSubmit(event) {
+            
+        CorrectLetterCounter = 0;
+
+        for(i=0; i < hexWords.length; i++)
+
+        {
+          
+            if (hexWords[i] == document.getElementById(i).innerHTML.substring(0,1))
+            {
+                                
+                CorrectLetterCounter = CorrectLetterCounter + 1;
+
+                if (CorrectLetterCounter == hexWords.length)
+                {
+
+                    stopTimer();
+                    MakeHexagonsReadOnly();
+                    alert("Congratulations! You solved the puzzle in " + document.getElementById("timer").innerHTML + " seconds!");
+                    CelebrationRoutine();
+                    break;
+                }
+                      
+                
+            }
+
+            else if (hexWords[i] != document.getElementById(i).innerHTML.substring(0,1))
+
+            {
+                alert("Not quite there. Keep going!");
+                //ShowCorrectAnswer();
+                break;
+            }
+
+        }
+    }
+
+    function ShadeHexagonGrid()
+        
+        {
+            for (i=0; i < hexWords.length; i++)
+            {
+                document.getElementById(i).style.backgroundColor = shadesOfGray[i];
+            }
+
+        }
+
+        function CelebrationRoutine()
+
+        {
+           for (i=0; i < hexWords.length; i++)
+           {
+            
+            document.getElementById(i).style.backgroundColor = "green";
+            document.getElementById(i).style.color = "black";
+            document.getElementById(i).style.animation = "bounce 1s infinite";
+
+           }
+
+        }
+
+
+        function handleCheckWord(event) {
+            
+            WordToCheck = 0;    
+           
+            for (i=0; i < cluesWords[0].length; i++)
+            {
+            
+            if (document.getElementById("clueDiv" + i).style.backgroundColor == "yellow")
+                {
+                WordToCheck = i;
+                }
+
+            }    
+
+            for (i=0; i < hexWords.length; i++)
+            {
+                if (HexWordsClueCounter[i] == WordToCheck)
+                {
+                    HexToCheck = document.getElementById(i);
+                    HexToCheckText = HexToCheck.innerHTML.toString();
+
+                    if (HexToCheckText.substring(0,1) != hexWords[i])
+                    {                      
+                       
+                        if ((HexToCheckText.includes("span")))
+                        {            
+                        const spanIndex = HexToCheckText.indexOf("<span");
+                        const modifiedContent = HexToCheckText.substring(spanIndex);
+                        HexToCheck.innerHTML = modifiedContent;
+                        }
+
+                        else
+                       
+                        {
+                        HexToCheck.innerHTML = "";
+                        }
+                    }    
+
+                }
+
+            }
+
+
+            WordToCheck = WordToCheck + 1;
+
+            for (i=0; i < hexWords.length; i++)
+
+            {
+                if ((HexWordsClueCounter[i] == WordToCheck) && (HexWordsOverlapCounter[i] == "Overlap" ))
+                {
+                    HexToCheck = document.getElementById(i);
+                    HexToCheckText = HexToCheck.innerHTML.toString();
+
+                    if (HexToCheckText.substring(0,1) != hexWords[i])
+                    {                      
+                       
+                        if ((HexToCheckText.includes("span")))
+                        {            
+                        const spanIndex = HexToCheckText.indexOf("<span");
+                        const modifiedContent = HexToCheckText.substring(spanIndex);
+                        HexToCheck.innerHTML = modifiedContent;
+                        }
+
+                        else
+                       
+                        {
+                        HexToCheck.innerHTML = "";
+                        }
+                   }    
+
+                }
+
+            }
+
+        }
+        
+
+        
+        
+        function handleRevealWord(event) {
+           
+            WordtoReveal = 0;
+
+            for (i=0; i < cluesWords[0].length; i++)
+            {
+                if (document.getElementById("clueDiv" + i).style.backgroundColor == "yellow")
+                {
+                    WordtoReveal = i;
+                }
+             
+
+        }
+        
+        for (i=0; i < hexWords.length; i++)
+        {
+            if (HexWordsClueCounter[i] == WordtoReveal)
+            {
+                HexToReveal = document.getElementById(i);
+                HexToRevealText = HexToReveal.innerHTML.toString();
+
+                if ((HexToRevealText.includes("span")))
+                {
+                    const spanIndex = HexToRevealText.indexOf("<span");
+                    const modifiedContent = HexToRevealText.substring(spanIndex);
+                    HexToReveal.innerHTML = hexWords[i] + modifiedContent;
+                }
+
+                else
+                {
+                    HexToReveal.innerHTML = hexWords[i];
+                }
+            }
+
+        }
+
+        WordtoReveal = WordtoReveal + 1;
+
+        for (i=0; i < hexWords.length; i++)
+        {
+            if ((HexWordsClueCounter[i] == WordtoReveal) && (HexWordsOverlapCounter[i] == "Overlap" ))
+            {
+                HexToReveal = document.getElementById(i);
+                HexToRevealText = HexToReveal.innerHTML.toString();
+
+                if ((HexToRevealText.includes("span")))
+                {
+                    const spanIndex = HexToRevealText.indexOf("<span");
+                    const modifiedContent = HexToRevealText.substring(spanIndex);
+                    HexToReveal.innerHTML = hexWords[i] + modifiedContent;
+                }
+
+                else
+                {
+                    HexToReveal.innerHTML = hexWords[i];
+                }
+            }
+
+        }
+
+    }
+        
+        function handleClearWord(event) {
+            
+           WordToClear = 0;
+
+            for (i=0; i < cluesWords[0].length; i++)
+            {
+            
+            if (document.getElementById("clueDiv" + i).style.backgroundColor == "yellow")
+            {
+                WordToClear = i;
+            }
+
+            }   
+                                   
+        
+            //Loop through the non-overlapping hexagon/letters and clear the content
+            for (i=0; i < hexWords.length; i++)
+            {
+                if (HexWordsClueCounter[i] == WordToClear)
+                {
+                    HexToClear = document.getElementById(i);              
+                    HexToClearText = HexToClear.innerHTML.toString();                   
+                    
+           
+                   //Make sure we don't clear the clue number
+                    if ((HexToClearText.includes("span")))
+                    {            
+                       const spanIndex = HexToClearText.indexOf("<span");
+                       const modifiedContent = HexToClearText.substring(spanIndex);
+                       HexToClear.innerHTML = modifiedContent;
+                    }
+
+                    else
+                       
+                    {
+                    HexToClear.innerHTML = "";
+                    }
+                   
+                }
+
+            } 
+            
+            //Clear the overlapping hexagons after the non-overlapping hexagons have been cleared   
+
+            WordToClear = WordToClear + 1;
+            
+            for (i=0; i < hexWords.length; i++)
+                {                  
+                              
+                                     
+
+                    if ((HexWordsClueCounter[i] == WordToClear) && (HexWordsOverlapCounter[i] == "Overlap" ))
+                    {
+                       
+                        HexToClear = document.getElementById(i);
+                        HexToClearText = HexToClear.innerHTML.toString();
+           
+                        if ((HexToClearText.includes("span")))
+                        {
+            
+                            const spanIndex = HexToClearText.indexOf("<span");
+                            const modifiedContent = HexToClearText.substring(spanIndex);
+                            HexToClear.innerHTML = modifiedContent;
+
+                        }
+
+                        else
+                       
+                        {
+                            HexToClear.innerHTML = "";
+                        }
+
+                    }
+                }
+
+
+            }
+                      
+       
+            function handleCheckPuzzle(event) {
+           
+           for (i=0; i < hexWords.length; i++)
+
+              {
+                HexToCheck = document.getElementById(i);
+                HexToCheckText = HexToCheck.innerHTML.toString();
+                if (HexToCheckText.substring(0,1) != hexWords[i])
+                {                      
+                   
+                    if ((HexToCheckText.includes("span")))
+                    {            
+                    const spanIndex = HexToCheckText.indexOf("<span");
+                    const modifiedContent = HexToCheckText.substring(spanIndex);
+                    HexToCheck.innerHTML = modifiedContent;
+                    }
+
+                    else
+                   
+                    {
+                    HexToCheck.innerHTML = "";
+                    }
+                }
+              }                                   
+                      
+            }
+
+        function handleRevealPuzzle(event) {
+         
+         for (i=0; i < hexWords.length; i++)
+           
+         {
+
+                HexToFill = document.getElementById(i);    
+                
+                CheckHexagonGuessforClueNumber = HexToFill.innerHTML.toString();
+               
+               if ((CheckHexagonGuessforClueNumber.includes("span")))
+               {
+                
+                const spanIndex = CheckHexagonGuessforClueNumber.indexOf("<span");
+                const modifiedContent = CheckHexagonGuessforClueNumber.substring(spanIndex);
+
+              
+                HexToFill.innerHTML = hexWords[i] + modifiedContent;
+                
+                }
+      
+                else
+                    
+                    {
+                        HexToFill.innerHTML = hexWords[i];
+                    }
+                
+                }
+      
+           //stopTimer();    
+            MakeHexagonsReadOnly();
+        
+                
+            }
+                                              
+        
+
+
+        function handleClearPuzzle(event) {
+                       
+          
+            for (i=0; i < hexWords.length; i++)
+            {
+            
+            HexToClear = document.getElementById(i);    
+                
+            CheckHexagonGuessforClueNumber = HexToClear.innerHTML.toString();
+           
+           if ((CheckHexagonGuessforClueNumber.includes("span")))
+           {
+            
+            const spanIndex = CheckHexagonGuessforClueNumber.indexOf("<span");
+            const modifiedContent = CheckHexagonGuessforClueNumber.substring(spanIndex);
+            
+            HexToClear.innerHTML = modifiedContent;
+            
+            }
+  
+            else
+                
+                {
+                    HexToClear.innerHTML = "";
+                }                                                   
+          
+        }
+    }
+
+
+    function MakeHexagonsReadOnly()
+    {
+
+        console.log("MakeHexagonsReadOnly function called");
+        for (i=0; i < hexWords.length; i++)
+        {
+          document.getElementById(i).removeEventListener('focus', IndicateHexagonFocus);
+          document.getElementById(i).removeEventListener('mouseover', IndicateHexagonFocus);
+          document.getElementById(i).removeEventListener('click', IndicateHexagonFocus);
+          document.getElementById(i).removeEventListener('keyup', AddGuess);
+
+        }         
+    
+        //Disable the buttons
+        document.getElementById("checkWordBtn").disabled = true;
+        document.getElementById("revealWordBtn").disabled = true;
+        document.getElementById("clearWordBtn").disabled = true;
+        document.getElementById("checkPuzzleBtn").disabled = true;
+        document.getElementById("revealPuzzleBtn").disabled = true;
+        document.getElementById("clearPuzzleBtn").disabled = true;
+    
+    }
+</script>                                    
+                       
+</body>
+</html>
+        
+        
+       
+            
+        
+   
